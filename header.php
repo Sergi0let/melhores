@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-	<title>MainPage</title>
 	<meta charset="UTF-8">
 	<meta name="format-detection" content="telephone=no">
 	<link rel="shortcut icon" href="favicon.ico">
@@ -14,15 +13,32 @@
 	<div class="wrapper">
 		<header class="header" data-scroll="80" data-scroll-show="500">
 			<div class="header__container">
-				<a href="#" class="header__logo" aria-label="link to main page">
-					<img class="header__logo-web" src="<?php echo get_stylesheet_directory_uri(); ?>/img/header/logo.webp" alt="logo" width="195" height="40" />
-					<img class="header__logo-mob" src="<?php echo get_stylesheet_directory_uri(); ?>/img/header/logo-mob.webp" alt="logo" width="120" height="40" />
-				</a>
+
+				<?php
+                if (has_custom_logo()) {
+                    $custom_logo_id = get_theme_mod('custom_logo');
+                    $desktop_logo_url = wp_get_attachment_image_url($custom_logo_id, 'full');
+
+                    // Отримуємо URL мобільного логотипу, якщо він завантажений
+                    $mobile_logo_url = get_theme_mod('mobile_logo');
+                    ?>
+						<a href="<?php echo esc_url(home_url('/')); ?>" class="header__logo">
+								<!-- Виведення десктопного логотипу -->
+								<img class="header__logo-web" src="<?php echo esc_url($desktop_logo_url); ?>" alt="<?php bloginfo('name'); ?>" width="195" height="40" />
+								
+								<!-- Виведення мобільного логотипу (якщо він заданий) -->
+								<?php if ($mobile_logo_url): ?>
+										<img class="header__logo-mob" src="<?php echo esc_url($mobile_logo_url); ?>" alt="<?php bloginfo('name'); ?>" width="120" height="40" />
+								<?php endif; ?>
+						</a>
+				<?php } ?>
+
 				<div data-da=".header__container,767.98,3" class="header__menu menu">
 					<button type="button" aria-label="menu open" class="menu__icon icon-menu">
 						<span></span>
 					</button>
-					<nav class="menu__body">
+					<?php if(false): ?>
+					<!-- <nav class="menu__body">
 						<div data-spollers="768" data-one-spoller class="menu__list">
 							<details class="menu__item">
 								<summary class="menu__link">By type</summary>
@@ -150,7 +166,21 @@
 								</ul>
 							</details>
 						</div>
-					</nav>
+					</nav> -->
+					<?php endif; ?>
+					<nav class="menu__body">
+						<?php
+                                    wp_nav_menu([
+                                            'theme_location' => 'header',
+                                            'container'      => false,
+                                            'menu_class'     => 'menu__list',
+                                            'items_wrap'     => '<ul id="%1$s" class="%2$s">%3$s</ul>',
+                                            'depth'          => 2,  // Використовуємо тільки один рівень, бо <summary> не підтримує вкладеність
+                                            'walker'         => new Summary_Menu_Walker(), // Використовуємо кастомний Walker
+                                            'fallback_cb'    => false,
+                                    ]);
+    ?>
+				</nav>
 				</div>
 				<div class="flet">
 					<p>
