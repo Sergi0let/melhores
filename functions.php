@@ -2,6 +2,8 @@
 
 
 require_once(__DIR__ . '/functions/customizer.php');
+require_once(__DIR__ . '/functions/widgets.php');
+require_once(__DIR__ . '/functions/menus.php');
 
 // Налаштування теми
 if (! function_exists('melhores_setup')) {
@@ -20,6 +22,10 @@ if (! function_exists('melhores_setup')) {
         // Налаштування кастомного логотипу для мобільної версії у Indentity
         add_action('customize_register', 'add_mobile_logo_to_site_identity');
 
+        // Виводити thumb для постів та сторінок
+        add_theme_support('post-thumbnails');
+
+        set_post_thumbnail_size(300, 200, true); // розмір мініатюр поста за замовучуванням
 
         // Динамічний <title>
         add_theme_support('title-tag');
@@ -40,7 +46,7 @@ function melhores_scripts()
     // Додатковий стиль теми
     wp_enqueue_style('melhores_style', get_template_directory_uri() . '/css/style.css', array('main_style'), null);
     // Підключення скрипта теми
-    wp_enqueue_script('melhores_script', get_template_directory_uri() . '/js/app.js', array(), '1.0.0', true);
+    wp_enqueue_script('melhores_script', get_template_directory_uri() . '/js/app.js', array('jquery'), '1.0.0', true);
 }
 add_action('wp_enqueue_scripts', 'melhores_scripts');
 
@@ -60,8 +66,11 @@ function melhores_menus()
 {
     // збираємо декілька областей меню
     $locations = [
-        'header' => __('Header Menu', 'melhores'),
-        'footer' => __('Footer Menu', 'melhores'),
+        'header'        => __('Header Menu', 'melhores'),
+        'footer-menu-1' => __('Tipi di Scommesse'),
+        'footer-menu-2' => __('Migliori Casinò non AAMS'),
+        'footer-menu-3' => __('Pagine Importanti'),
+        'footer-menu-4' => __('Media Sociali'),
     ];
     // регіструємо області меню, які лежать у $locations
     register_nav_menus($locations);
@@ -69,44 +78,39 @@ function melhores_menus()
 // хук собитіє
 add_action('init', 'melhores_menus');
 
-class Summary_Menu_Walker extends Walker_Nav_Menu
+
+
+
+function melhores_widgets_init()
 {
-    // Відкриваємо елемент <details> для основного пункту меню
-    public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0)
-    {
-        $classes = implode(' ', $item->classes);
+    register_sidebar([
+        'name' => esc_html__('Сайдбарчик', 'melhores'),
+        'id' => 'sidebar-slot',
+        'before_widget' => '<div>',
+        'after_widget' => '</div>',
+        'before_sidebar' => '<aside id="%1$s" class="sidebar-widget %2$s">',
+        'after_sidebar' => '</aside>',
+        'before_title' => '<h2 class="sidebar-widget-title">',
+        'after_title' => '</h2>',
+    ]);
 
-        if ($depth === 0) {
-            // Початок основного пункту меню з тегами <details> і <summary>
-            $output .= '<details class="menu__item">';
-            $output .= '<summary class="menu__link">' . esc_html($item->title) . '</summary>';
-        } else {
-            // Виведення вкладених пунктів меню як елементів <li>
-            $output .= '<li class="menu__sub-item"><a href="' . esc_url($item->url) . '"><span>' . esc_html($item->title) . '</span><span>' . rand(1, 100) . '</span></a></li>';
-        }
-    }
-
-    // Закриваємо елемент меню
-    public function end_el(&$output, $item, $depth = 0, $args = null)
-    {
-        if ($depth === 0) {
-            $output .= '</details>'; // Закриваємо <details>
-        }
-    }
-
-    // Відкриваємо <ul> для підпунктів
-    public function start_lvl(&$output, $depth = 0, $args = null)
-    {
-        if ($depth === 0) {
-            $output .= '<ul class="menu__sub-list">';
-        }
-    }
-
-    // Закриваємо <ul> для підпунктів
-    public function end_lvl(&$output, $depth = 0, $args = null)
-    {
-        if ($depth === 0) {
-            $output .= '</ul>';
-        }
-    }
+    register_sidebar([
+        'name' => esc_html__('Сайдбарчик нижнього колонтитула', 'melhores'),
+        'id' => 'sidebar-footer-bottom',
+        'before_widget' => '<div class="footer__content">',
+        'after_widget' => '</div>',
+        'before_title' => '<p>',
+        'after_title' => '</p>',
+    ]);
 }
+add_action('widgets_init', 'melhores_widgets_init');
+
+
+
+add_filter('widget_text_content', function ($content, $widget, $instance) {
+    if (!empty($widget->id) && $widget->id === 'sidebar-footer-bottom') {
+        // Повертаємо чистий контент без зайвих контейнерів
+        return $content;
+    }
+    return $content;
+}, 10, 3);
